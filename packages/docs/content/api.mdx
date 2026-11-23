@@ -3151,6 +3151,37 @@ type Output = z.output<typeof trimmed>; // string
 
 This is useful when integrating with libraries like `react-hook-form` that derive their form value type from `z.input<>`.
 
+### `.overwrite()`
+
+To transform a value without changing its type, use `.overwrite()`. Unlike `.transform()`, it returns an instance of the original schema class, so you can keep chaining methods.
+
+<Tabs groupId="lib" items={["Zod", "Zod Mini"]}>
+<Tab value="Zod">
+```ts
+const squared = z.number().overwrite((val) => val ** 2).max(100);
+
+squared.parse(5); // => 25
+squared.parse(11); // ❌ (121 > 100)
+```
+</Tab>
+<Tab value="Zod Mini">
+```ts
+const squared = z.number().check(z.overwrite((val) => val ** 2), z.maximum(100));
+
+z.parse(squared, 5); // => 25
+z.parse(squared, 11); // ❌ (121 > 100)
+```
+</Tab>
+</Tabs>
+
+The overwrite function runs in order with the schema's other checks, so checks that come after it see the new value. Since the type doesn't change, schemas that use `.overwrite()` can still be converted to [JSON Schema](/json-schema).
+
+> `.trim()`, `.toLowerCase()`, `.toUpperCase()` and `.normalize()` are implemented with `.overwrite()`.
+
+<Callout type="warn">
+  Overwrite functions must be synchronous and return a value of the same type. They are not awaited, even with `.parseAsync()`.
+</Callout>
+
 ## Defaults
 
 To set a default value for a schema:
